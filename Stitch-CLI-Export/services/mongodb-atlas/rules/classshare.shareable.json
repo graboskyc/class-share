@@ -22,7 +22,9 @@
         },
         {
             "name": "default",
-            "apply_when": {},
+            "apply_when": {
+                "visible": true
+            },
             "read": true,
             "insert": false,
             "delete": false,
