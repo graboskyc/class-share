@@ -6,14 +6,7 @@
         {
             "name": "admin",
             "apply_when": {
-                "%%true": {
-                    "%function": {
-                        "name": "isValidAdmin",
-                        "arguments": [
-                            "%%user"
-                        ]
-                    }
-                }
+                "owner.id": "%%user.id"
             },
             "write": true,
             "insert": true,

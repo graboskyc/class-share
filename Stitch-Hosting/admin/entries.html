@@ -1,0 +1,147 @@
+<html>
+    <head>
+        <title>Entries</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >
+        <script src="https://use.fontawesome.com/4132d47bbc.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <script src="../conf/conf.js"></script>
+        <style>
+            code { white-space: pre}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="nav">
+                <a class="navbar-brand" href="#">
+                    <img src="../resources/leaf.png" height="30" alt="" />
+                    &nbsp; Entries for <span id="span_classid"></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarNavAltMarkup"><div class="navbar-nav" id="navlist"></div></div>
+                <ul class='navbar-nav'>
+                    <li class="nav-item"><a class="nav-item nav-link"  href="courses.html">Back to Courses</a></li>
+                    <li class="nav-item"><a class="nav-item nav-link"  data-toggle="modal" href="#newModal">New</a></li>
+                </ul>
+            </nav>
+
+            <div id="ctr_main"></div>
+        </div>
+
+        <div class="modal" tabindex="-1" role="dialog" id="newModal">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">New Course</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <label for="txt_title">Section Title</label>
+                    <input type="text" class="form-control" id="txt_title" >
+                    <label for="txt_order">Order</label>
+                    <input type="text" class="form-control" id="txt_order" value="1" >
+
+                    <label for="ddl_visible">Visible</label>
+                    <select class="form-control" id="ddl_visible">
+                        <option>false</option>
+                        <option>true</option>
+                    </select>
+
+                    <label for="ddl_type">Type</label>
+                    <select class="form-control" id="ddl_type">
+                        <option>text</option>
+                        <option>code</option>
+                    </select>
+
+                    <label for="txt_value">Value</label>
+                    <textarea class="form-control" id="txt_value" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-success" onclick="saveNew()">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        <script>
+            const client = stitch.Stitch.initializeDefaultAppClient(GLOBALSTITCHAPP);
+            const mongodb = client.getServiceClient(stitch.RemoteMongoClient.factory,"mongodb-atlas");
+            const db = mongodb.db(GLOBALDBNAME);
+
+            function presentResult(docs) {
+                docs.map(entry => {
+                    var html = "";
+                    var visColor = "danger";
+                    if(entry.visible == true) { visColor = "success"; }
+
+                    html += '<div class="card" style="margin-top:15px;"><div class="card-header">';
+                    html += entry.title || "";
+                    html += " (Step " + entry.entryid +")";
+                    html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+entry._id.toString()+"',"+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
+                    html += '</div><div class="card-body">';
+
+                    if ( entry.type=="code") {
+                        html += "<code>"+entry.value+"</code>";
+                    } else {
+                        html += entry.value;
+                    }
+                    
+                    html += '</div></div>';
+                    $("#ctr_main").append(html);
+                    lastFind = entry.entryid;
+                });
+            }
+
+            function query() {
+                var pipeline = [{$match: {
+                    "classid":getHashbang()
+                }}];
+                db.collection("shareable").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
+            }
+
+            function recordSuccess() {
+                document.location.reload();
+            }
+
+            function toggleVis(id,tf) {
+                var oid = new stitch.BSON.ObjectId(id);
+                tf = !tf;
+                db.collection("shareable").updateOne({"_id":oid},{"$set":{"visible":tf}}).then(result => { location.reload(true); }).catch(err => console.log(err));
+            }
+
+            function saveNew() {
+                var doc = {};
+                doc.classid = getHashbang();
+                doc.entryid = parseInt($('#txt_order').val());
+                doc.title = $('#txt_title').val();
+
+                if($('#ddl_visible option:selected').text() == "true") {
+                    doc.visible = true;
+                } else {
+                    doc.visible = false;
+                }
+
+                doc.type = $('#ddl_type option:selected').text();
+                doc.value = $('#txt_value').val();
+                doc.owner = {};
+                doc.owner.id = client.auth.authInfo.userId;
+                doc.owner.email = client.auth.authInfo.userProfile.data.email;
+                db.collection("shareable")
+                    .insertOne(doc)
+                    .then(recordSuccess)
+                    .catch(err=>console.error(`login failed with error: ${err}`));
+            }
+
+            $(function() {
+                $('#span_classid').html(getHashbang());
+                query();
+            });
+        </script>
+    </body>
+</html>
