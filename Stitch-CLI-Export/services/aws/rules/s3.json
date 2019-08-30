@@ -1,0 +1,20 @@
+{
+    "id": "5d694ea4488bf6bc6b56f2e2",
+    "name": "s3",
+    "actions": [
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:GetObject",
+        "s3:GetObjectAcl"
+    ],
+    "when": {
+        "%%true": {
+            "%function": {
+                "name": "isValidAdmin",
+                "arguments": [
+                    "%%user"
+                ]
+            }
+        }
+    }
+}
