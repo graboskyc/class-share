@@ -73,7 +73,7 @@
                     <textarea class="form-control" id="txt_value" rows="3"></textarea>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-secondary" onclick="document.location.reload()">Close</button>
                   <button type="button" class="btn btn-success" onclick="saveNew()">Save</button>
                 </div>
               </div>
@@ -226,9 +226,10 @@
             }
 
             function query() {
-                var pipeline = [{$match: {
-                    "classid":getHashbang()
-                }}];
+                var pipeline = [
+                    {$match: {"classid":getHashbang()}},
+                    {$sort:{entryid:1}}
+                ];
                 db.collection("shareable").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
             }
 
