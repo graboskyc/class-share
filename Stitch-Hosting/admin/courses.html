@@ -70,6 +70,29 @@
             </div>
           </div>
 
+          <div class="modal" tabindex="-1" role="dialog" id="cloneModal">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Clone Course</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body" id="cloneModalBody">
+                        <label for="txt_src">Source Class ID</label>
+                        <input type="text" class="form-control" id="txt_src" >
+                        <label for="txt_target">Target Class ID</label>
+                        <input type="text" class="form-control" id="txt_target" >
+                    </div>
+                    <div class="modal-footer" id="cloneModalFooter">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-success" onclick="cloneSave()">Clone</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
         <script>
             const client = stitch.Stitch.initializeDefaultAppClient(GLOBALSTITCHAPP);
             const mongodb = client.getServiceClient(stitch.RemoteMongoClient.factory,"mongodb-atlas");
@@ -80,12 +103,36 @@
                     var html = "";
                     html += '<div class="card mb-3" style="max-width: 18rem; margin-top:15px;"><div class="card-header">';
                     html += "Course " + grp._id;
+                    html += "&nbsp; <button class='btn btn-primary btn-sm' onclick=\"clone('"+grp._id+"')\"><i class='fa fa-clone' aria-hidden='true'></i></button>"
                     html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDocs('"+grp._id+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
                     html += '</div><div class="card-body">';
                     html += '<a href="entries.html#!'+grp._id+'">Contains '+grp.ct+' entries</a>';
                     html += '</div></div>';
                     $("#ctr_main").append(html);
                 });
+            }
+
+            function cloneSave() {
+                var src = $('#txt_src').val();
+                var dst = $('#txt_target').val();
+                var pipeline = [{$match: {"classid":src}}];
+                $('#cloneModalBody').html('<div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>');
+                $('#cloneModalFooter').html('');
+
+                db.collection("shareable").aggregate(pipeline).asArray().then(function(docs){
+                    docs.map(d => {
+                        d.classid = dst;
+                        delete d._id;
+                        db.collection("shareable").insertOne(d);
+                    });
+                }).catch(err => {console.error(err)});
+
+                setTimeout(function() {location.reload(true);},5000);
+            }
+
+            function clone(id) {
+                $('#txt_src').val(id);
+                $('#cloneModal').modal('show');
             }
 
             function query() {
