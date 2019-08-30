@@ -1,0 +1,12 @@
+{
+    "app_id": "class-share-yvroi",
+    "config_version": 20180301,
+    "name": "class-share",
+    "location": "US-VA",
+    "deployment_model": "LOCAL",
+    "security": {},
+    "hosting": {
+        "enabled": true,
+        "app_default_domain": "class-share-yvroi.mongodbstitch.com"
+    }
+}

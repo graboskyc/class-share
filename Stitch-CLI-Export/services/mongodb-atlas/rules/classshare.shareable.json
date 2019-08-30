@@ -1,0 +1,39 @@
+{
+    "id": "5d687476d2e96982b0b755db",
+    "database": "classshare",
+    "collection": "shareable",
+    "roles": [
+        {
+            "name": "admin",
+            "apply_when": {
+                "%%true": {
+                    "%function": {
+                        "name": "isValidAdmin",
+                        "arguments": [
+                            "%%user"
+                        ]
+                    }
+                }
+            },
+            "write": true,
+            "insert": true,
+            "delete": true,
+            "additional_fields": {}
+        },
+        {
+            "name": "default",
+            "apply_when": {},
+            "read": true,
+            "insert": false,
+            "delete": false,
+            "additional_fields": {}
+        }
+    ],
+    "schema": {
+        "properties": {
+            "_id": {
+                "bsonType": "objectId"
+            }
+        }
+    }
+}

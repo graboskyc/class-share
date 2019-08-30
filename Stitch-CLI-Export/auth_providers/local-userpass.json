@@ -1,0 +1,12 @@
+{
+    "id": "5d686a8e0e003f6d63f67ccb",
+    "name": "local-userpass",
+    "type": "local-userpass",
+    "config": {
+        "confirmEmailSubject": "",
+        "emailConfirmationUrl": "https://stitch-statichosting-prod.s3.amazonaws.com/5d6866a20e003f6d63f4d1d5/admin/emailregistration.html",
+        "resetPasswordSubject": "",
+        "resetPasswordUrl": "https://stitch-statichosting-prod.s3.amazonaws.com/5d6866a20e003f6d63f4d1d5/admin/reset.html"
+    },
+    "disabled": false
+}
