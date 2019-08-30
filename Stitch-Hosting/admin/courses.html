@@ -136,10 +136,10 @@
             }
 
             function query() {
-                var pipeline = [{$group: {
-                    _id: "$classid",
-                    ct: {$sum: 1}
-                }}];
+                var pipeline = [
+                    {$match: {"owner.id": client.auth.authInfo.userId}},
+                    {$group: { _id: "$classid", ct: {$sum: 1} }}
+                ];
                 pipeline.push({$sort:{entryid:1}});
                 db.collection("shareable").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
             }
