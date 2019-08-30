@@ -1,6 +1,6 @@
 # class-share
 
-A simple application to share code snippets and messages to a classroom
+A simple application to share code snippets and messages to a classroom built on top of MongoDB Atlas and MongoDB Stitch serverless platform
 
 # Deployment
  * Create a MongoDB Atlas cluster (free tier will work)
