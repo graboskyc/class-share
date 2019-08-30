@@ -36,12 +36,14 @@
             function presentResult(docs) {
                 docs.map(entry => {
                     var html = "";
+                    var step = $('#ctr_main').children().length + 1;
+
                     html += '<div class="card text-white bg-dark" style="margin-top:15px;"><div class="card-header">';
                     html += entry.title || "";
-                    html += " (Step " + entry.entryid +")";
+                    html += " (Step " + step +")";
                     html += '</div><div class="card-body">';
                     if ( entry.type=="code") {
-                        html += "<code>"+entry.value+"</code>";
+                        html += "<code>"+cleanHTML(entry.value)+"</code>";
                     } else {
                         html += entry.value;
                     }
@@ -51,7 +53,7 @@
                 });
                 setTimeout(function() {
                     query(lastFind)
-                },10000);
+                },8000);
             }
 
             function query(lastResult) {

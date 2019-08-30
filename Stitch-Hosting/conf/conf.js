@@ -41,3 +41,8 @@ function makeRandomID(length) {
             this.getFullYear().toString().substr(-2)
             ].join('/');
 };
+
+function cleanHTML(instr) {
+    // https://stackoverflow.com/questions/784586/convert-special-characters-to-html-in-javascript
+    return instr.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+}

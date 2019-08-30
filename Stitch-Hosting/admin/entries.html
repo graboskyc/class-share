@@ -54,8 +54,8 @@
 
                     <label for="ddl_type">Type</label>
                     <select class="form-control" id="ddl_type">
-                        <option>text</option>
                         <option>code</option>
+                        <option>text</option>
                     </select>
 
                     <label for="txt_value">Value</label>
@@ -74,28 +74,33 @@
             const mongodb = client.getServiceClient(stitch.RemoteMongoClient.factory,"mongodb-atlas");
             const db = mongodb.db(GLOBALDBNAME);
 
+            var max = 1;
+
             function presentResult(docs) {
                 docs.map(entry => {
                     var html = "";
+                    var step = $('#ctr_main').children().length + 1;
                     var visColor = "danger";
                     if(entry.visible == true) { visColor = "success"; }
 
                     html += '<div class="card" style="margin-top:15px;"><div class="card-header">';
                     html += entry.title || "";
-                    html += " (Step " + entry.entryid +")";
+                    html += " (Order <b>"+step+"</b> Step ID <b>" + entry.entryid +"</b>)";
                     html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+entry._id.toString()+"',"+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDoc('"+entry._id.toString()+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
                     html += '</div><div class="card-body">';
 
                     if ( entry.type=="code") {
-                        html += "<code>"+entry.value+"</code>";
+                        html += "<code>"+cleanHTML(entry.value)+"</code>";
                     } else {
                         html += entry.value;
                     }
                     
                     html += '</div></div>';
                     $("#ctr_main").append(html);
-                    lastFind = entry.entryid;
+                    max = entry.entryid;
                 });
+                $('#txt_order').val((max+5));
             }
 
             function query() {
@@ -113,6 +118,14 @@
                 var oid = new stitch.BSON.ObjectId(id);
                 tf = !tf;
                 db.collection("shareable").updateOne({"_id":oid},{"$set":{"visible":tf}}).then(result => { location.reload(true); }).catch(err => console.log(err));
+            }
+
+            function deleteDoc(id) {
+                var oid = new stitch.BSON.ObjectId(id);
+                var r = confirm("Really delete?");
+                if (r == true) {
+                    db.collection("shareable").deleteOne({"_id":oid}).then(result => { location.reload(true); }).catch(err => console.log(err));
+                }
             }
 
             function saveNew() {
