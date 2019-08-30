@@ -7,6 +7,7 @@
         <script src="https://use.fontawesome.com/4132d47bbc.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch-services-aws.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
         <script src="../conf/conf.js"></script>
         <style>
@@ -58,6 +59,15 @@
                         <option>text</option>
                     </select>
 
+                    <label for="file-input">Choose an Image File (.jpg or .png) at 720p resolution (1280x720)</label>
+                    <input type="file" id="file-input" onchange="updateInputValue(this)" class="form-control"> <br />
+                    <button id="btn_upload" class="btn btn-success" onclick="setUploadingState().then(handleFileUpload)">Upload</button> <br />
+                    <div class="spinner-border text-success" role="status" style="display:none;" id="spinner"><span class="sr-only">Loading...</span></div>
+                    <br/>
+
+                    <label for="txt_path">Path of Image:</label>
+                    <input type="text" name="txt_path" id="txt_path" class="form-control" />
+
                     <label for="txt_value">Value</label>
                     <textarea class="form-control" id="txt_value" rows="3"></textarea>
                 </div>
@@ -69,10 +79,34 @@
             </div>
           </div>
 
+          <div class="modal " tabindex="-1" role="dialog" id="imgModal">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Image</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <img src="" id="modalImage" width="100%" />
+                </div>
+              </div>
+            </div>
+            </div>
+        </div>
+
         <script>
             const client = stitch.Stitch.initializeDefaultAppClient(GLOBALSTITCHAPP);
             const mongodb = client.getServiceClient(stitch.RemoteMongoClient.factory,"mongodb-atlas");
             const db = mongodb.db(GLOBALDBNAME);
+
+            const {
+                Stitch,
+                AnonymousCredential,
+                AwsServiceClient,
+                AwsRequest
+            } = stitch;
 
             var max = 1;
 
@@ -88,6 +122,9 @@
                     html += " (Order <b>"+step+"</b> Step ID <b>" + entry.entryid +"</b>)";
                     html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+entry._id.toString()+"',"+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
                     html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDoc('"+entry._id.toString()+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
+                    if(entry.hasOwnProperty("image")) {
+                        html += "&nbsp; <button class='btn btn-info btn-sm' onclick=\"openImage('"+entry.image+"')\"><i class='fa fa-picture-o' aria-hidden='true'></i></button>"
+                    }
                     html += '</div><div class="card-body">';
 
                     if ( entry.type=="code") {
@@ -101,6 +138,88 @@
                     max = entry.entryid;
                 });
                 $('#txt_order').val((max+5));
+            }
+
+            function openImage(src) {
+                $('#modalImage').attr('src',src);
+                $('#imgModal').modal('show');
+            }
+
+            async function handleFileUpload() {
+                // Grab the file from the input element
+                const file = document.getElementById("file-input").files[0];
+                if (!file) { return unsetUploadingState().then(noFileError) }
+
+                // Process the image file
+                const fileBinary = await convertImageToBSONBinaryObject(file)
+                // Upload the image binary to S3
+                const aws = client.getServiceClient(AwsServiceClient.factory, "aws");
+                var now = new Date();
+                const key = `${client.auth.user.id}-${now.getTime()}-${file.name}`;
+                const bucket = "gskyclassshare";
+
+                const request = new AwsRequest.Builder()
+                    .withService("s3")
+                    .withAction("PutObject")
+                    .withRegion("us-east-1")
+                    .withArgs({
+                    ACL: "public-read",
+                    Bucket: bucket,
+                    ContentType: file.type,
+                    Key: key,
+                    Body: fileBinary
+                    });
+                    
+                try {
+                    await aws.execute(request.build())
+                    console.log(bucket);
+                    console.log(key);
+                    $('#btn_upload').show();
+                    $('#spinner').hide();
+                    $('#txt_path').val("https://s3.amazonaws.com/"+bucket+"/"+key);
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+
+            function setUploadingState() {
+                $('#btn_upload').hide();
+                $('#spinner').show();
+                return Promise.resolve();
+            }
+
+            function unsetUploadingState() {
+                $('#btn_upload').show();
+                $('#spinner').hide();
+                return Promise.resolve();
+            }
+
+            function convertImageToBSONBinaryObject(file) {
+                return new Promise(resolve => {
+                    var fileReader = new FileReader();
+                    fileReader.onload = event => {
+                    resolve({
+                        $binary: {
+                        base64: event.target.result.split(",")[1],
+                        subType: "00"
+                        }
+                    });
+                    }
+                    fileReader.readAsDataURL(file);
+                })
+            }
+
+            function updateInputValue(inputEl) {
+                const file = inputEl.files[0];
+                if (file) {
+                    const fileExtension = file.name.split(".").pop()
+                    const fileName = file.name.length <= 50
+                    ? file.name
+                    : `${file.name.substr(0, 44)}... .${fileExtension}`
+
+                    const labelEl = document.querySelector(`label[for=${inputEl.id}]`);
+                    labelEl.innerText = fileName;
+                }
             }
 
             function query() {
@@ -133,6 +252,9 @@
                 doc.classid = getHashbang();
                 doc.entryid = parseInt($('#txt_order').val());
                 doc.title = $('#txt_title').val();
+                if($('#txt_path').val().length > 0) {
+                    doc.image = $('#txt_path').val();
+                }
 
                 if($('#ddl_visible option:selected').text() == "true") {
                     doc.visible = true;
