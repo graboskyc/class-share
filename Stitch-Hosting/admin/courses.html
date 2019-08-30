@@ -80,6 +80,7 @@
                     var html = "";
                     html += '<div class="card mb-3" style="max-width: 18rem; margin-top:15px;"><div class="card-header">';
                     html += "Course " + grp._id;
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDocs('"+grp._id+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
                     html += '</div><div class="card-body">';
                     html += '<a href="entries.html#!'+grp._id+'">Contains '+grp.ct+' entries</a>';
                     html += '</div></div>';
@@ -98,6 +99,13 @@
 
             function recordSuccess() {
                 window.location = "entries.html#!" + $('#txt_classid').val();
+            }
+
+            function deleteDocs(classid) {
+                var r = confirm("Really delete?");
+                if (r == true) {
+                    db.collection("shareable").deleteMany({"classid":classid}).then(result => { location.reload(true); }).catch(err => console.log(err));
+                }
             }
 
             function saveNew() {
