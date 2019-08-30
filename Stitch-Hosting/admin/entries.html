@@ -42,6 +42,7 @@
                   </button>
                 </div>
                 <div class="modal-body">
+                    <input type="hidden" class="form-control" id="txt_id" >
                     <label for="txt_title">Section Title</label>
                     <input type="text" class="form-control" id="txt_title" >
                     <label for="txt_order">Order</label>
@@ -122,6 +123,7 @@
                     html += " (Order <b>"+step+"</b> Step ID <b>" + entry.entryid +"</b>)";
                     html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+entry._id.toString()+"',"+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
                     html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDoc('"+entry._id.toString()+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' id='"+entry._id.toString()+"' onclick=\"updateDoc(this)\"><i class='fa fa-pencil' aria-hidden='true'></i></button>"
                     if(entry.hasOwnProperty("image")) {
                         html += "&nbsp; <button class='btn btn-info btn-sm' onclick=\"openImage('"+entry.image+"')\"><i class='fa fa-picture-o' aria-hidden='true'></i></button>"
                     }
@@ -135,6 +137,7 @@
                     
                     html += '</div></div>';
                     $("#ctr_main").append(html);
+                    $('#'+entry._id.toString()).data('obj', entry);
                     max = entry.entryid;
                 });
                 $('#txt_order').val((max+5));
@@ -247,6 +250,16 @@
                 }
             }
 
+            function updateDoc(item) {
+                var entry = $(item).data("obj");
+                $('#txt_id').val(entry._id.toString());
+                $('#txt_title').val(entry.title);
+                $('#txt_order').val(entry.entryid);
+                $('#txt_path').val(entry.image);
+                $('#txt_value').val(entry.value);
+                $('#newModal').modal('show');
+            }
+
             function saveNew() {
                 var doc = {};
                 doc.classid = getHashbang();
@@ -267,10 +280,19 @@
                 doc.owner = {};
                 doc.owner.id = client.auth.authInfo.userId;
                 doc.owner.email = client.auth.authInfo.userProfile.data.email;
-                db.collection("shareable")
-                    .insertOne(doc)
-                    .then(recordSuccess)
-                    .catch(err=>console.error(`login failed with error: ${err}`));
+
+                if($('#txt_id').val().length > 0) {
+                    doc._id = new stitch.BSON.ObjectId($('#txt_id').val());
+                    db.collection("shareable")
+                        .updateOne({_id:doc._id}, doc)
+                        .then(recordSuccess)
+                        .catch(err=>console.error(`login failed with error: ${err}`));
+                } else {
+                    db.collection("shareable")
+                        .insertOne(doc)
+                        .then(recordSuccess)
+                        .catch(err=>console.error(`login failed with error: ${err}`));
+                }
             }
 
             $(function() {
