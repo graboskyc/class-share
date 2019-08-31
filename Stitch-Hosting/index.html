@@ -81,7 +81,7 @@
     <script>
         $('#form-signin').submit(function(e) {
             e.preventDefault();    
-            window.location = "view.html#!" + $("#txt_course").val();
+            window.location = "view.html#!" + $("#txt_course").val().toLowerCase();
             return false;
         });
     </script>

@@ -76,6 +76,7 @@
                     html += '</div></div>';
                     $("#ctr_main").append(html);
                     lastFind = entry.entryid;
+                    $('html, body').animate({scrollTop: $(document).height()}, 'slow');
                 });
                 setTimeout(function() {
                     query(lastFind)

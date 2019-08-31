@@ -157,7 +157,7 @@
 
             function saveNew() {
                 var doc = {};
-                doc.classid = $('#txt_classid').val();
+                doc.classid = $('#txt_classid').val().toLowerCase();
                 doc.entryid = parseInt($('#txt_order').val());
                 doc.title = $('#txt_title').val();
                 
