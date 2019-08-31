@@ -112,6 +112,7 @@
             } = stitch;
 
             var max = 1;
+            var nextToToggleOn = -1;
 
             function presentResult(docs) {
                 docs.map(entry => {
@@ -144,6 +145,9 @@
                     $("#ctr_main").append(html);
                     $('#'+entry._id.toString()).data('obj', entry);
                     max = entry.entryid;
+                    if((entry.visible == false) && (nextToToggleOn == -1)) {
+                        nextToToggleOn = entry._id.toString();
+                    }
                 });
                 $('#txt_order').val((max+5));
             }
@@ -304,6 +308,17 @@
             $(function() {
                 $('#span_classid').html(getHashbang());
                 query();
+                $('body').keyup(function(e){
+                    if(e.keyCode == 32){
+                        // user has pressed space
+                        if(nextToToggleOn != -1) {
+                            toggleVis(nextToToggleOn, false);
+                        } else { 
+                            alert("Everything is visible now!");
+                        }
+                    }
+                });
+
             });
         </script>
     </body>
