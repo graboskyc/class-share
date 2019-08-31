@@ -8,6 +8,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
         <script src="conf/conf.js"></script>
         <style>
             code { white-space: pre}
@@ -62,11 +63,16 @@
                         html += "&nbsp; <button class='btn btn-info btn-sm' onclick=\"openImage('"+entry.image+"')\"><i class='fa fa-picture-o' aria-hidden='true'></i></button>"
                     }
                     html += '</div><div class="card-body">';
+
                     if ( entry.type=="code") {
                         html += "<code>"+cleanHTML(entry.value)+"</code>";
+                    } else if (entry.type=="markdown") {
+                        var converter = new showdown.Converter();
+                        html += converter.makeHtml(entry.value);
                     } else {
                         html += entry.value;
                     }
+
                     html += '</div></div>';
                     $("#ctr_main").append(html);
                     lastFind = entry.entryid;

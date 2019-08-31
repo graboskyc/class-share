@@ -9,6 +9,7 @@
         <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
         <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch-services-aws.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
         <script src="../conf/conf.js"></script>
         <style>
             code { white-space: pre}
@@ -58,6 +59,7 @@
                     <select class="form-control" id="ddl_type">
                         <option>code</option>
                         <option>text</option>
+                        <option>markdown</option>
                     </select>
 
                     <label for="file-input">Choose an Image File (.jpg or .png) at 720p resolution (1280x720)</label>
@@ -131,6 +133,9 @@
 
                     if ( entry.type=="code") {
                         html += "<code>"+cleanHTML(entry.value)+"</code>";
+                    } else if (entry.type=="markdown") {
+                        var converter = new showdown.Converter();
+                        html += converter.makeHtml(entry.value);
                     } else {
                         html += entry.value;
                     }
