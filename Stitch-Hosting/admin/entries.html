@@ -41,7 +41,7 @@
                   </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" class="form-control" id="txt_id" >
+                    <input type="hidden" class="form-control" id="txt_edit" >
                     <label for="txt_title">Section Title</label>
                     <input type="text" class="form-control" id="txt_title" >
                     <label for="txt_order">Order</label>
@@ -113,8 +113,9 @@
             var nextToToggleOn = -1;
 
             function presentResult(docs) {
-                docs.map(entry => {
+                docs.map(doc => {
                     var html = "";
+                    var entry = doc.entries;
                     var step = $('#ctr_main').children().length + 1;
                     var visColor = "danger";
                     if(entry.visible == true) { visColor = "success"; }
@@ -122,9 +123,9 @@
                     html += '<div class="card" style="margin-top:15px;"><div class="card-header">';
                     html += entry.title || "";
                     html += " (Order <b>"+step+"</b> Step ID <b>" + entry.entryid +"</b>)";
-                    html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+entry._id.toString()+"',"+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
-                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDoc('"+entry._id.toString()+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
-                    html += "&nbsp; <button class='btn btn-warning btn-sm' id='"+entry._id.toString()+"' onclick=\"updateDoc(this)\"><i class='fa fa-pencil' aria-hidden='true'></i></button>"
+                    html += "&nbsp; <button class='btn btn-"+visColor+" btn-sm' onclick=\"toggleVis('"+doc.classid+"',"+parseInt(entry.entryid)+","+entry.visible+")\"><i class='fa fa-eye' aria-hidden='true'></i></button>";
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDoc('"+doc.classid+"','"+entry.entryid+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' id='eid"+entry.entryid+"' onclick=\"updateDoc(this)\"><i class='fa fa-pencil' aria-hidden='true'></i></button>"
                     if(entry.hasOwnProperty("image")) {
                         html += "&nbsp; <button class='btn btn-info btn-sm' onclick=\"openImage('"+entry.image+"')\"><i class='fa fa-picture-o' aria-hidden='true'></i></button>"
                     }
@@ -141,10 +142,10 @@
                     
                     html += '</div></div>';
                     $("#ctr_main").append(html);
-                    $('#'+entry._id.toString()).data('obj', entry);
+                    $('#eid'+entry.entryid).data('obj', entry);
                     max = entry.entryid;
                     if((entry.visible == false) && (nextToToggleOn == -1)) {
-                        nextToToggleOn = entry._id.toString();
+                        nextToToggleOn = entry.entryid;
                     }
                 });
                 $('#txt_order').val((max+5));
@@ -234,33 +235,41 @@
 
             function query() {
                 var pipeline = [
-                    {$match: {"classid":getHashbang()}},
-                    {$sort:{entryid:1}}
+                    {$match: { classid:getHashbang()}}, 
+                    {$unwind: {path: "$entries"}}, 
+                    {$sort: { "entries.entryid": 1}}
                 ];
-                db.collection("shareable").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
+                db.collection("classes").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
             }
 
             function recordSuccess() {
                 document.location.reload();
             }
 
-            function toggleVis(id,tf) {
-                var oid = new stitch.BSON.ObjectId(id);
+            function toggleVis(classid, entryid, tf) {
+                console.log(classid, entryid, tf);
                 tf = !tf;
-                db.collection("shareable").updateOne({"_id":oid},{"$set":{"visible":tf}}).then(result => { location.reload(true); }).catch(err => console.log(err));
+
+                db.collection("classes").updateOne(
+                    {"classid":classid, "entries.entryid":parseInt(entryid)}, 
+                    {$set: {"entries.$.visible":tf}}
+                ).then(result => { location.reload(true); }).catch(err => console.log(err));
             }
 
-            function deleteDoc(id) {
-                var oid = new stitch.BSON.ObjectId(id);
+            function deleteDoc(classid, entryid) {
+                console.log(classid, entryid);
                 var r = confirm("Really delete?");
                 if (r == true) {
-                    db.collection("shareable").deleteOne({"_id":oid}).then(result => { location.reload(true); }).catch(err => console.log(err));
+                    db.collection("classes").updateOne(
+                        {"classid":classid},
+                        {$pull: {"entries":{"entryid":parseInt(entryid)}}}
+                    ).then(result => { location.reload(true); }).catch(err => console.log(err));
                 }
             }
 
             function updateDoc(item) {
                 var entry = $(item).data("obj");
-                $('#txt_id').val(entry._id.toString());
+                $('#txt_edit').val(entry.entryid);
                 $('#txt_title').val(entry.title);
                 $('#txt_order').val(entry.entryid);
                 $('#txt_path').val(entry.image);
@@ -269,54 +278,38 @@
             }
 
             function saveNew() {
-                var doc = {};
-                doc.classid = getHashbang();
-                doc.entryid = parseInt($('#txt_order').val());
-                doc.title = $('#txt_title').val();
+                var entry = {};
+                entry.entryid = parseInt($('#txt_order').val());
+                entry.title = $('#txt_title').val();
                 if($('#txt_path').val().length > 0) {
-                    doc.image = $('#txt_path').val();
+                    entry.image = $('#txt_path').val();
                 }
 
                 if($('#ddl_visible option:selected').text() == "true") {
-                    doc.visible = true;
+                    entry.visible = true;
                 } else {
-                    doc.visible = false;
+                    entry.visible = false;
                 }
 
-                doc.type = $('#ddl_type option:selected').text();
-                doc.value = $('#txt_value').val();
-                doc.owner = {};
-                doc.owner.id = client.auth.authInfo.userId;
-                doc.owner.email = client.auth.authInfo.userProfile.data.email;
+                entry.type = $('#ddl_type option:selected').text();
+                entry.value = $('#txt_value').val();
 
-                if($('#txt_id').val().length > 0) {
-                    doc._id = new stitch.BSON.ObjectId($('#txt_id').val());
-                    db.collection("shareable")
-                        .updateOne({_id:doc._id}, doc)
-                        .then(recordSuccess)
-                        .catch(err=>console.error(`login failed with error: ${err}`));
+                if($('#txt_edit').val().length > 0) {
+                    db.collection("classes").updateOne(
+                            {"classid":getHashbang(), "entries.entryid":entry.entryid}, 
+                            {$set: {"entries.$":entry}}
+                        ).then(result => { location.reload(true); }).catch(err => console.log(err));
                 } else {
-                    db.collection("shareable")
-                        .insertOne(doc)
-                        .then(recordSuccess)
-                        .catch(err=>console.error(`login failed with error: ${err}`));
-                }
+                    db.collection("classes").updateOne(
+                        {"classid":getHashbang()}, 
+                        {$push: {"entries":entry}}
+                    ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                }                
             }
 
             $(function() {
                 $('#span_classid').html(getHashbang());
                 query();
-                $('body').keyup(function(e){
-                    if(e.keyCode == 32){
-                        // user has pressed space
-                        if(nextToToggleOn != -1) {
-                            toggleVis(nextToToggleOn, false);
-                        } else { 
-                            alert("Everything is visible now!");
-                        }
-                    }
-                });
-
             });
         </script>
     </body>

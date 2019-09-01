@@ -1,7 +1,7 @@
 {
-    "id": "5d687476d2e96982b0b755db",
+    "id": "5d6ab9c566ffe09edc70b8d3",
     "database": "classshare",
-    "collection": "shareable",
+    "collection": "classes",
     "roles": [
         {
             "name": "admin",
@@ -15,9 +15,7 @@
         },
         {
             "name": "default",
-            "apply_when": {
-                "visible": true
-            },
+            "apply_when": {},
             "read": true,
             "insert": false,
             "delete": false,

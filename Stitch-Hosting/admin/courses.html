@@ -100,11 +100,11 @@
                 docs.map(grp => {
                     var html = "";
                     html += '<div class="card mb-3" style="max-width: 18rem; margin-top:15px;"><div class="card-header">';
-                    html += "Course " + grp._id;
-                    html += "&nbsp; <button class='btn btn-primary btn-sm' onclick=\"clone('"+grp._id+"')\"><i class='fa fa-clone' aria-hidden='true'></i></button>"
-                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDocs('"+grp._id+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
+                    html += "Course " + grp.classid;
+                    html += "&nbsp; <button class='btn btn-primary btn-sm' onclick=\"clone('"+grp.classid+"')\"><i class='fa fa-clone' aria-hidden='true'></i></button>"
+                    html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDocs('"+grp.classid+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
                     html += '</div><div class="card-body">';
-                    html += '<a href="entries.html#!'+grp._id+'">Contains '+grp.ct+' entries</a>';
+                    html += '<a href="entries.html#!'+grp.classid+'">Contains '+grp.ct+' entries</a>';
                     html += '</div></div>';
                     $("#ctr_main").append(html);
                 });
@@ -114,18 +114,19 @@
                 var src = $('#txt_src').val();
                 var dst = $('#txt_target').val();
                 var pipeline = [{$match: {"classid":src}}];
+
                 $('#cloneModalBody').html('<div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>');
                 $('#cloneModalFooter').html('');
 
-                db.collection("shareable").aggregate(pipeline).asArray().then(function(docs){
+                db.collection("classes").aggregate(pipeline).asArray().then(function(docs){
                     docs.map(d => {
                         d.classid = dst;
                         delete d._id;
-                        db.collection("shareable").insertOne(d);
+                        db.collection("classes").insertOne(d);
                     });
                 }).catch(err => {console.error(err)});
 
-                setTimeout(function() {location.reload(true);},5000);
+                setTimeout(function() {location.reload(true);},3000);
             }
 
             function clone(id) {
@@ -136,10 +137,9 @@
             function query() {
                 var pipeline = [
                     {$match: {"owner.id": client.auth.authInfo.userId}},
-                    {$group: { _id: "$classid", ct: {$sum: 1} }}
+                    {$project: {classid:1,ct:{$size:"$entries"}}}
                 ];
-                pipeline.push({$sort:{entryid:1}});
-                db.collection("shareable").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
+                db.collection("classes").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
             }
 
             function recordSuccess() {
@@ -149,31 +149,41 @@
             function deleteDocs(classid) {
                 var r = confirm("Really delete?");
                 if (r == true) {
-                    db.collection("shareable").deleteMany({"classid":classid}).then(result => { location.reload(true); }).catch(err => console.log(err));
+                    db.collection("classes").deleteOne({"classid":classid}).then(result => { location.reload(true); }).catch(err => console.log(err));
+                }
+            }
+
+            function recordError(err) {
+                console.log(err);
+                if(err.e.indexOf("duplicate key error") !== -1) {
+                    alert('That class ID is taken. Try another.');
                 }
             }
 
             function saveNew() {
                 var doc = {};
+                var entry = {};
                 doc.classid = $('#txt_classid').val().toLowerCase();
-                doc.entryid = parseInt($('#txt_order').val());
-                doc.title = $('#txt_title').val();
+                doc.entries = [];
+                entry.entryid = parseInt($('#txt_order').val());
+                entry.title = $('#txt_title').val();
                 
                 if($('#ddl_visible option:selected').text() == "true") {
-                    doc.visible = true;
+                    entry.visible = true;
                 } else {
-                    doc.visible = false;
+                    entry.visible = false;
                 }
 
-                doc.type = $('#ddl_type option:selected').text();
-                doc.value = $('#txt_value').val();
+                entry.type = $('#ddl_type option:selected').text();
+                entry.value = $('#txt_value').val();
                 doc.owner = {};
                 doc.owner.id = client.auth.authInfo.userId;
                 doc.owner.email = client.auth.authInfo.userProfile.data.email;
-                db.collection("shareable")
+                doc.entries.push(entry);
+                db.collection("classes")
                     .insertOne(doc)
                     .then(recordSuccess)
-                    .catch(err=>console.error(`login failed with error: ${err}`));
+                    .catch(recordError);
             }
 
             $(function() {

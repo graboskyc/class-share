@@ -50,8 +50,9 @@
             var lastFind = -1;
 
             function presentResult(docs) {
-                docs.map(entry => {
+                docs.map(doc => {
                     var html = "";
+                    var entry = doc.entries;
                     var step = $('#ctr_main').children().length + 1;
 
                     html += '<div class="card text-white bg-dark" style="margin-top:15px;"><div class="card-header">';
@@ -88,15 +89,14 @@
 
             function query(lastResult) {
                 console.log("Querying...");
-                var pipeline = [];
-                pipeline.push({$match:{
-                    classid:getHashbang(),
-                    entryid:{$gt:lastResult},
-                    visible:true
-                }});
-                pipeline.push({$sort:{entryid:1}});
+                var pipeline = [
+                    {$match: { classid:getHashbang()}}, 
+                    {$unwind: {path: "$entries"}}, 
+                    {$match: { "entries.visible":true, "entries.entryid":{$gt:lastResult}}}, 
+                    {$sort: { "entries.entryid": 1}}
+                ];
                 client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(() => 
-                    db.collection("shareable").aggregate(pipeline).asArray()).then(presentResult).catch(err => {console.error(err)});
+                    db.collection("classes").aggregate(pipeline).asArray()).then(presentResult).catch(err => {console.error(err)});
             }
 
             $(function() {
