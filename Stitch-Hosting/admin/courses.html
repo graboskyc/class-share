@@ -20,9 +20,8 @@
                     <img src="../resources/leaf.png" height="30" alt="" />
                     &nbsp; Classes for <span id="span_usr"></span>
                 </a>
-                <ul class='navbar-nav'>
-                    <li class="nav-item"><a class="nav-item nav-link"  data-toggle="modal" href="#newModal">New Course</a></li>
-                </ul>
+                
+                <button class='btn btn-outline-success btn-md ' style="margin-right: 10px;"  onclick="$('#newModal').modal('show');"><i class='fa fa-plus-circle' aria-hidden='true'></i></button>
             </nav>
 
             <div id="ctr_main" class="card-columns"></div>
@@ -155,7 +154,7 @@
 
             function recordError(err) {
                 console.log(err);
-                if(err.e.indexOf("duplicate key error") !== -1) {
+                if(err.message.indexOf("duplicate key error") !== -1) {
                     alert('That class ID is taken. Try another.');
                 }
             }
