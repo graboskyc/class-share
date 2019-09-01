@@ -117,9 +117,8 @@
         
         function loginFail(err) {
             console.error(`login failed with error: ${err}`);
-            $('#response').html("Login Failed");
-            $('#response').removeAttr('class');
-            $('#response').addClass("alert alert-danger");
+            var msg = $('<div class="alert alert-danger" role="alert" id="">Login failed!</div>').hide().fadeIn(750);
+            $('#form-signin').prepend(msg);
         }
     </script>
 </body>
