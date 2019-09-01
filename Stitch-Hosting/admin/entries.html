@@ -61,8 +61,8 @@
                         <option>markdown</option>
                     </select>
 
-                    <label for="file-input">Choose an Image File (.jpg or .png) at 720p resolution (1280x720)</label>
-                    <input type="file" id="file-input" onchange="updateInputValue(this)" class="form-control"> <br />
+                    <label for="file-input">Choose an Image File (.jpg or .png)</label>
+                    <input type="file" id="file-input" onchange="updateInputValue(this)" class="form-control-file"> <br />
                     <button id="btn_upload" class="btn btn-success" onclick="setUploadingState().then(handleFileUpload)">Upload</button> <br />
                     <div class="spinner-border text-success" role="status" style="display:none;" id="spinner"><span class="sr-only">Loading...</span></div>
                     <br/>
