@@ -89,6 +89,9 @@
         <input type="password" id="txt_pw" class="form-control" placeholder="Password" required>
         
         <button class="btn btn-lg btn-success btn-block" id="btn_submit">Sign in</button>
+
+        <br><br>
+        <small><a href="javascript:passwordReset();">I forgot my password</a></small>
     </form>
 
     <script>
@@ -119,6 +122,24 @@
             console.error(`login failed with error: ${err}`);
             var msg = $('<div class="alert alert-danger" role="alert" id="">Login failed!</div>').hide().fadeIn(750);
             $('#form-signin').prepend(msg);
+        }
+
+        function passwordReset() {
+          if($('#txt_un').val().length > 0 ) {
+            const emailPassClient = client.auth.getProviderClient(stitch.UserPasswordAuthProviderClient.factory);
+
+            emailPassClient.sendResetPasswordEmail($('#txt_un').val()).then(() => {
+              var msg = $('<div class="alert alert-success" role="alert" id="">Password reset sent to your email!</div>').hide().fadeIn(750);
+              $('#form-signin').prepend(msg);
+            }).catch(err => {
+              var msg = $('<div class="alert alert-danger" role="alert" id="">Password reset failed!</div>').hide().fadeIn(750);
+              $('#form-signin').prepend(msg);
+              console.log(err);
+            });
+          }
+          else {
+            alert("Fill out your email address!");
+          }
         }
     </script>
 </body>
