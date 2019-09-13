@@ -24,7 +24,7 @@
                 <button class='btn btn-outline-success btn-md ' style="margin-right: 10px;"  onclick="$('#newModal').modal('show');"><i class='fa fa-plus-circle' aria-hidden='true'></i></button>
             </nav>
 
-            <div id="ctr_main" class="card-columns"></div>
+            <div id="ctr_main" class="card-columns" style="margin-top:15px;"></div>
         </div>
 
         <div class="modal" tabindex="-1" role="dialog" id="newModal">
@@ -98,7 +98,7 @@
             function presentResult(docs) {
                 docs.map(grp => {
                     var html = "";
-                    html += '<div class="card mb-3" style="max-width: 18rem; margin-top:15px;"><div class="card-header">';
+                    html += '<div class="card"><div class="card-header">';
                     html += "Course " + grp.classid;
                     html += "&nbsp; <button class='btn btn-primary btn-sm' onclick=\"clone('"+grp.classid+"')\"><i class='fa fa-clone' aria-hidden='true'></i></button>"
                     html += "&nbsp; <button class='btn btn-warning btn-sm' onclick=\"deleteDocs('"+grp.classid+"')\"><i class='fa fa-trash' aria-hidden='true'></i></button>"
@@ -136,7 +136,8 @@
             function query() {
                 var pipeline = [
                     {$match: {"owner.id": client.auth.authInfo.userId}},
-                    {$project: {classid:1,ct:{$size:"$entries"}}}
+                    {$project: {classid:1,ct:{$size:"$entries"}}}, 
+                    {$sort: { classid: 1}}
                 ];
                 db.collection("classes").aggregate(pipeline).asArray().then(presentResult).catch(err => {console.error(err)});
             }
@@ -187,6 +188,9 @@
 
             $(function() {
                 $('#span_usr').html(client.auth.authInfo.userProfile.data.email);
+                $('#span_usr').click(function() {
+                    alert('Your ID is: ' + client.auth.authInfo.userId);
+                });
                 query();
             });
         </script>
