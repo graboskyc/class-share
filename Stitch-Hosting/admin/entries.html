@@ -25,6 +25,7 @@
 
                 <button class='btn btn-outline-light btn-md ' style="margin-right: 10px;" onclick="window.location = 'courses.html';"><i class='fa fa-arrow-left' aria-hidden='true'></i></button>
                 <button class='btn btn-outline-success btn-md ' style="margin-right: 10px;"  onclick="$('#newModal').modal('show');"><i class='fa fa-plus-circle' aria-hidden='true'></i></button>
+                <button class='btn btn-outline-warning btn-md ' style="margin-right: 10px;"  onclick="$('#userModal').modal('show');"><i class='fa fa-user-plus' aria-hidden='true'></i></button>
                 <button class='btn btn-outline-info btn-md ' onclick="toggleNextVis()"><i class='fa fa-eye' aria-hidden='true'></i></button>
 
             </nav>
@@ -77,6 +78,27 @@
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" onclick="document.location.reload()">Close</button>
                   <button type="button" class="btn btn-success" onclick="saveNew()">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        <div class="modal" tabindex="-1" role="dialog" id="userModal">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Add User To Course</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <label for="txt_uid">User ID</label>
+                    <input type="text" class="form-control" id="txt_uid" >
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" onclick="document.location.reload()">Close</button>
+                  <button type="button" class="btn btn-success" onclick="addUser()">Add User</button>
                 </div>
               </div>
             </div>
@@ -291,6 +313,25 @@
                 $.get(GLOBALTOKENHOOK+getHashbang(), function(data){
                     $('#div_token').html(data.tokens.key);
                 });
+            }
+
+            function addUser() {
+                db.collection("classes").find({classid:getHashbang()},{owner:1}).asArray().then(
+                    function(docs) {
+                        var owners = [];
+                        if(Array.isArray(docs[0].owner)) {
+                            owners = docs[0].owner;
+                        } else {
+                            owners.push(docs[0].owner);
+                        }
+                        owners.push({id:$('#txt_uid').val()});
+                        
+                        db.collection("classes").updateOne(
+                                {"classid":getHashbang()},
+                                {$set: {"owner":owners}}
+                            ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                    }
+                ).catch(err => {console.error(err)});
             }
 
             function saveNew() {
