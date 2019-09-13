@@ -1,5 +1,6 @@
 GLOBALSTITCHAPP = "class-share-yvroi";
 GLOBALDBNAME = "classshare";
+GLOBALTOKENHOOK = "https://us-east-1.aws.webhooks.mongodb-stitch.com/api/client/v2.0/app/class-share-yvroi/service/hook/incoming_webhook/getCode?id=";
 
 function logout() {
     client.auth.isLoggedIn = false;

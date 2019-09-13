@@ -26,6 +26,7 @@ A simple application to share code snippets and messages to a classroom built on
 * `visible` is boolean and describes if it should be displayed yet to the students
 * `value` is the string content that should be displayed in the bootstrap card
 * `type` is a string enum of `text` (display as is), `code` (will wrap in a preformatted code block), or `markdown` (markdown code) to describe any formatting to be used on the `value` content when rendering it
+* If `type` is `token` it will instead take each line of the `value` main content text box and treat it as a single use coupon code token for distribution to a class. In its place in the content area will be a button to generate the token, tokens are recorded when they are used.
 
 ## Sample Schema
 ```

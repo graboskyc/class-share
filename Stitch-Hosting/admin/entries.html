@@ -59,6 +59,7 @@
                         <option>code</option>
                         <option>text</option>
                         <option>markdown</option>
+                        <option>tokens</option>
                     </select>
 
                     <label for="file-input">Choose an Image File (.jpg or .png)</label>
@@ -286,10 +287,18 @@
                 $('#newModal').modal('show');
             }
 
+            function loadToken() {
+                $.get(GLOBALTOKENHOOK+getHashbang(), function(data){
+                    $('#div_token').html(data.tokens.key);
+                });
+            }
+
             function saveNew() {
                 var entry = {};
                 entry.entryid = parseInt($('#txt_order').val());
                 entry.title = $('#txt_title').val();
+                entry.type = $('#ddl_type option:selected').text();
+
                 if($('#txt_path').val().length > 0) {
                     entry.image = $('#txt_path').val();
                 }
@@ -300,20 +309,40 @@
                     entry.visible = false;
                 }
 
-                entry.type = $('#ddl_type option:selected').text();
-                entry.value = $('#txt_value').val();
+                if(entry.type == "tokens") {
+                    var srcAr = $('#txt_value').val().split("\n");
+                    $.each(srcAr, function (index, value) {
+                        srcAr[index] = {key:value, used:false};
+                    });
 
-                if($('#txt_edit').val().length > 0) {
                     db.collection("classes").updateOne(
-                            {"classid":getHashbang(), "entries.entryid":entry.entryid}, 
-                            {$set: {"entries.$":entry}}
-                        ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                            {"classid":getHashbang()}, 
+                            {$set: {"tokens":srcAr}}
+                        ).then(result => { 
+                            entry.value = '<div id="div_token" style="width:100%;text-align:center;font-size:24px;"><button class="btn btn-large btn-success" onclick="loadToken();">Generate Token</button></div>';
+                            db.collection("classes").updateOne(
+                                {"classid":getHashbang()}, 
+                                {$push: {"entries":entry}}
+                            ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                        }).catch(err => console.log(err));
+
                 } else {
-                    db.collection("classes").updateOne(
-                        {"classid":getHashbang()}, 
-                        {$push: {"entries":entry}}
-                    ).then(result => { location.reload(true); }).catch(err => console.log(err));
-                }                
+                    entry.value = $('#txt_value').val();
+
+                    if($('#txt_edit').val().length > 0) {
+                        // existing update
+                        db.collection("classes").updateOne(
+                                {"classid":getHashbang(), "entries.entryid":entry.entryid}, 
+                                {$set: {"entries.$":entry}}
+                            ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                    } else {
+                        // new item for list
+                        db.collection("classes").updateOne(
+                            {"classid":getHashbang()}, 
+                            {$push: {"entries":entry}}
+                        ).then(result => { location.reload(true); }).catch(err => console.log(err));
+                    }
+                }
             }
 
             $(function() {
