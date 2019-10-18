@@ -49,6 +49,12 @@
 
             var lastFind = -1;
 
+            function loadToken() {
+                $.get(GLOBALTOKENHOOK+getHashbang(), function(data){
+                    $('#div_token').html(data.tokens.key);
+                });
+            }
+
             function presentResult(docs) {
                 docs.map(doc => {
                     var html = "";
