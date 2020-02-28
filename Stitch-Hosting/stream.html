@@ -92,6 +92,11 @@
                     html += '</li>';
                     $("#mainul").append(html);
                     lastFind = entry.entryid;
+
+                    if(entry.hasOwnProperty("image")) {
+                        console.log("has an image");
+                        $('body').css("background-image","url('"+entry.image+"')");
+                    }
                 });
                 setTimeout(function() {
                     query(lastFind)
