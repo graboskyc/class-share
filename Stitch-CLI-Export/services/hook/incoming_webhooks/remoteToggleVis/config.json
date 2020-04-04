@@ -1,0 +1,13 @@
+{
+    "id": "5e88c63e29a9e41c8536134b",
+    "name": "remoteToggleVis",
+    "run_as_authed_user": true,
+    "run_as_user_id": "",
+    "run_as_user_id_script_source": "",
+    "options": {
+        "httpMethod": "GET",
+        "validationMethod": "NO_VALIDATION"
+    },
+    "respond_result": true,
+    "disable_arg_logs": true
+}

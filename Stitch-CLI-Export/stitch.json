@@ -8,5 +8,11 @@
     "hosting": {
         "enabled": true,
         "app_default_domain": "class-share-yvroi.mongodbstitch.com"
+    },
+    "custom_user_data_config": {
+        "enabled": false
+    },
+    "sync": {
+        "development_mode_enabled": false
     }
 }
