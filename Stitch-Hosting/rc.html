@@ -1,0 +1,116 @@
+<html>
+    <head>
+        <title>Required Capabilities</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >
+        <script src="https://use.fontawesome.com/4132d47bbc.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.4.0/stitch.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
+        <script src="conf/conf.js"></script>
+        <style>
+            code { white-space: pre; color: #e83e8c !important;}
+            body {
+                display: -ms-flexbox;
+                display: flex;
+                -ms-flex-align: center;
+                align-items: center;
+                padding-top: 40px;
+                padding-bottom: 40px;
+                background-color: #F5F6F7;
+                background-image: url("resources/9.jpg");
+                background-position: center center;
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+            #ctr_main {
+                position:absolute;
+                right:10px;
+                width:500px;
+                top:50px;
+            }
+            .card {
+                color:white;
+                text-shadow: 2px 2px #21313C;
+                font-size: 20px;
+                font-family: Lucida Console,Lucida Sans Typewriter,monaco,Bitstream Vera Sans Mono,monospace; 
+                background-color: transparent;
+                border:3px solid;
+                text-align: center;
+            }
+            h1 { 
+                text-align: center;
+                color: white;
+                text-decoration: underline;
+                margin-bottom: 10px;
+                text-shadow: 2px 2px #21313C;
+                font-family: Lucida Console,Lucida Sans Typewriter,monaco,Bitstream Vera Sans Mono,monospace;  
+            }
+        </style>
+    </head>
+    <body>
+
+
+            <div id="ctr_main"><h1>RC List: </h1><div class='card-column' id="ctr_list"></div></div>
+
+
+        <script>
+            const client = stitch.Stitch.initializeDefaultAppClient(GLOBALSTITCHAPP);
+            const mongodb = client.getServiceClient(stitch.RemoteMongoClient.factory,"mongodb-atlas");
+            const db = mongodb.db(GLOBALDBNAME);
+
+            var lastFind = -1;
+
+            function loadToken() {
+                $.get(GLOBALTOKENHOOK+getHashbang(), function(data){
+                    $('#div_token').html(data.tokens.key);
+                });
+            }
+
+            function presentResult(docs) {
+                docs.map(doc => {
+                    var html = "";
+                    var entry = doc.entries;
+                    var step = $('#mainul').children().length + 1;
+
+                    html += '<div class="card"><div class="card-body">';
+
+                    if ( entry.type=="code") {
+                        html += "<code>"+cleanHTML(entry.value)+"</code>";
+                    } else if (entry.type=="markdown") {
+                        var converter = new showdown.Converter();
+                        html += converter.makeHtml(entry.value);
+                    } else {
+                        html += entry.value;
+                    }
+
+                    html += '</div></div>';
+                    $("#ctr_list").append(html);
+                    lastFind = entry.entryid;
+                });
+                setTimeout(function() {
+                    query(lastFind)
+                },1000);
+            }
+
+            function query(lastResult) {
+                console.log("Querying...");
+                var pipeline = [
+                    {$match: { classid:getHashbang()}}, 
+                    {$unwind: {path: "$entries"}}, 
+                    {$match: { "entries.visible":true, "entries.entryid":{$gt:lastResult}}}, 
+                    {$sort: { "entries.entryid": 1}}
+                ];
+                client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(() => 
+                    db.collection("classes").aggregate(pipeline).asArray()).then(presentResult).catch(err => {console.error(err)});
+            }
+
+            $(function() {
+                $('#spn_classid').html(getHashbang());
+                query(lastFind);
+            });
+        </script>
+    </body>
+</html>
